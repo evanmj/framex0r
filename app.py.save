@@ -5,7 +5,6 @@ import time
 from threading import Thread
 from flask import Flask, render_template, session, request
 from flask.ext.socketio import SocketIO, emit, join_room, leave_room
-import base64
 
 app = Flask(__name__)
 app.debug = True
@@ -14,25 +13,15 @@ socketio = SocketIO(app)
 thread = None
 
 
-
 def background_thread():
     """Example of how to send server generated events to clients."""
     count = 0
     while True:
-        time.sleep(3)
+        time.sleep(10)
         count += 1
-        #display loaded image
-        socketio.emit('display',{'data': True},nameespace='/test')
-        #load new image.
-        imgpath = "./static/" + str(count) + ".png"
-        print "Showing: " + imgpath
-        with open(imgpath, "rb") as image_file:  # grab image off disk
-            encoded_string = base64.b64encode(image_file.read()) # encode image to base64 string
-        socketio.emit('img',
-                      {'data': encoded_string},
-                      namespace='/test')  # send string to client for it to show
-        if count > 2:
-            count = 0
+        socketio.emit('my response',
+                      {'data': 'Server generated event'ount},
+                      namespace='/test')
 
 
 @app.route('/')
@@ -45,8 +34,10 @@ def index():
 
 @app.route('/dispimg')
 def dispimg():
+    socketio.emit('img',
+          {'data': 'Server generated event', 'count': count},
+          namespace='/test')
     return render_template('index.html')    
-
 
 @socketio.on('my event', namespace='/test')
 def test_message(message):
