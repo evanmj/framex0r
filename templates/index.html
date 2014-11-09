@@ -23,9 +23,12 @@
 
             socket.on('img', function(msg) {
                 
-                var image1 = $('<img />').attr('src', 'data:image/png;base64,' + msg.data );
-                $('#img').replaceWith(image1);
-                // $('#img').replaceWith('<img src="data:image/png;base64,' + msg.data + '">');
+                //var image1 = $('<img />').attr('src', 'data:image/png;base64,' + msg.data );
+                //$('#img').replaceWith(image1);
+                //$('#img').replaceWith('<img src="data:image/png;base64,' + msg.data + '">');
+ 
+                $('#image').attr('src', 'data:image/png;base64,' + msg.data );
+
             });
 
             // handlers for the different forms in the page
@@ -79,6 +82,7 @@
     </form>
     <h2>Receive:</h2>
     <div id="log"></div>
-    <div id="img"></div>
+   
+    <div id="img"><img src="static/Blank.png" id="image"></div>
 </body>
 </html>
