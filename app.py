@@ -34,11 +34,14 @@ def background_thread():
                       namespace='/test')  # send string to client for it to show
 
         print "done loading"
+
+        time.sleep(10)
+
+        print "displaying..."
         socketio.emit('display_image',
                       {'data': True},
                       namespace='/test')
 
-        time.sleep(10)
 
         print "done displaying"
         if count > 2:
