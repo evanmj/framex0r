@@ -34,27 +34,37 @@
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
 
-            var _image = $('<img>');
-
             socket.on('load_image', function(msg) {
-                $('#debug2').append('loading image...<br>');
-                _image.attr('src', 'data:image/png;base64,' + msg.data);
-                $('#debug2').append('image loaded.<br>');
+
+                $('#debug2').append('load_img time<br>');
+                
+                //var image1 = $('<img/>').attr('src', 'data:image/png;base64,' + msg.data);
+
+               $('<img src="' + 'https://www.google.com/images/srpr/logo11w.png' + '">').load(function() {
+                 $(this).width(200).height(200).appendTo('#img');
+
+               }); 
+
             });
 
             socket.on('display_image', function(msg) {
-                $('#debug2').append('starting display...<br>');
-                $('#img').append(_image);
-                $('#debug2').append('display complete.<br>');
+
+
+
+      //works        $('#img').attr('src', 'data:image/png;base64,' + msg.data );
+                $('#debug2').append('display_img time<br>');
             });
 
 
         });
+
+
+
     </script>
 </head>
 <body>
     <div id="debug"></div>
     <div id="debug2"></div>
-    <div id="img"></div>
+    <img id="img">
 </body>
 </html>

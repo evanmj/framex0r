@@ -19,28 +19,18 @@ def background_thread():
     """Example of how to send server generated events to clients."""
     count = 0
     while True:
+        time.sleep(3)
         count += 1
-
         #display loaded image
-
+        socketio.emit('display',{'data': True},nameespace='/test')
         #load new image.
         imgpath = "./static/" + str(count) + ".png"
         print "Showing: " + imgpath
         with open(imgpath, "rb") as image_file:  # grab image off disk
             encoded_string = base64.b64encode(image_file.read()) # encode image to base64 string
-
-        socketio.emit('load_image',
+        socketio.emit('img',
                       {'data': encoded_string},
                       namespace='/test')  # send string to client for it to show
-
-        print "done loading"
-        socketio.emit('display_image',
-                      {'data': True},
-                      namespace='/test')
-
-        time.sleep(10)
-
-        print "done displaying"
         if count > 2:
             count = 0
 

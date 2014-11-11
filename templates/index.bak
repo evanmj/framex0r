@@ -24,37 +24,28 @@
 
         $(document).ready(function(){
             namespace = '/test'; // change to an empty string to use the global namespace
-
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
-
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
-
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
+            socket.on('img', function(msg) {
+                
+                //  var image1 = $('<img />').attr('src', 'data:image/png;base64,' + msg.data );
+                //  $('#img').replaceWith(image1);
+                // $('#img').replaceWith('<img src="data:image/png;base64,' + msg.data + '">');
 
-            var _image = $('<img>');
+                $('#image').attr('src', 'data:image/png;base64,' + msg.data );
 
-            socket.on('load_image', function(msg) {
-                $('#debug2').append('loading image...<br>');
-                _image.attr('src', 'data:image/png;base64,' + msg.data);
-                $('#debug2').append('image loaded.<br>');
             });
-
-            socket.on('display_image', function(msg) {
-                $('#debug2').append('starting display...<br>');
-                $('#img').append(_image);
-                $('#debug2').append('display complete.<br>');
-            });
-
-
         });
+
+
+
     </script>
 </head>
 <body>
-    <div id="debug"></div>
-    <div id="debug2"></div>
-    <div id="img"></div>
+    <div id="img"><img src="static/Blank.png" id="image"></div>
 </body>
 </html>
