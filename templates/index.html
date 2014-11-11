@@ -6,6 +6,8 @@
             margin:0;
             height:100%;
             overflow:hidden;
+            background-color: black;
+            color: grey;
         }
         img{
             min-height:100%;
@@ -36,15 +38,25 @@
 
             var _image = $('<img>');
 
+            // Pre-load image so we can sync the display up better.
             socket.on('load_image', function(msg) {
                 $('#debug2').append('loading image...<br>');
                 _image.attr('src', 'data:image/png;base64,' + msg.data);
                 $('#debug2').append('image loaded.<br>');
             });
 
+            // Display the image when commanded.
             socket.on('display_image', function(msg) {
                 $('#debug2').append('starting display...<br>');
-                $('#img').append(_image);
+
+		$('#img').fadeOut('slow',function(){
+                    
+		    $(this).append(_image).fadeIn('slow');
+		});
+
+//                $('#img').append(_image);
+
+
                 $('#debug2').append('display complete.<br>');
             });
 
