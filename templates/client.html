@@ -48,7 +48,7 @@
             // Pre-load image so we can sync the display up better.  (USING URL THIS TIME)
             socket.on('load_image_url', function(msg) {
                 $('#debug2').append('loading image...<br>');
-                _image.attr('src', msg.data);
+                _image.attr('src', '{{ url_for('static',filename='library/' + 'landscape') }}' + '/' + msg.data);
                 $('#debug2').append('image loaded.<br>');
             });
 

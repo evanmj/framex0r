@@ -13,8 +13,10 @@ app.config['SECRET_KEY'] = 'adajjsjdkjljskjflas444'
 socketio = SocketIO(app)
 thread = None
 
-photo_lib_path = './static/library/'
+photo_lib_path = './static/library/' #do not change
 library_paths = {}
+
+
 
 def launch_bgthread():
     global thread
@@ -28,18 +30,6 @@ def background_thread():
     count = 3
     while True:
         count += 1
-
-        #display loaded image
-
-        #load new image.
-#        imgpath = "./static/" + str(count) + ".png"
-#        print "Showing: " + imgpath
-#        with open(imgpath, "rb") as image_file:  # grab image off disk
-#            encoded_string = base64.b64encode(image_file.read()) # encode image to base64 string
-
-#        socketio.emit('load_image',
-#                      {'data': encoded_string},
-#                      namespace='/test')  # send string to client for it to show
 
         new_url = str(count) + ".png"  # 'static' folder will be added on client html side
 
