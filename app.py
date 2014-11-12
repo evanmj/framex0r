@@ -5,6 +5,10 @@
 #  TODO: changing channel works, but the loop still goes, which is temporary anyway, but...
 #        basically it tries to finish showing the folder with the new channel being passed to the client,
 #        but with the old file name.
+#
+#  TODO: Verify files found are valid image extension and maybe check file sigs
+#
+
 
 from gevent import monkey
 monkey.patch_all()
@@ -119,7 +123,7 @@ def new_channel(new_channel):
     # TODO: Validate!!!
     print 'changing channel from: ' + current_channel + ' to: ' + new_channel
     current_channel = new_channel
-    return redirect(request.args.get('next') or url_for('index'))  #return page the user wanted, or index if none reqd.
+    return redirect(url_for('channels'))  #return page the user wanted, or index if none reqd.
 
 @socketio.on('my event', namespace='/test')
 def test_message(message):
