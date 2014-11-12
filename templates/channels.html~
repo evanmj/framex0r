@@ -1,0 +1,36 @@
+<!-- extend base layout -->
+{% extends "base.html" %}
+
+{% block content %}
+
+{% include 'flash.html' %}
+
+<!-- display channels -->
+{% for key, value in library_paths.iteritems() %}
+
+  <h4 class="text-info">{{ key }}:</h4>
+
+	<FORM METHOD="LINK" ACTION="{{ url_for('index') }}">
+                  <button type="submit" class="btn btn-success btn-small btnblock">Set</button>
+        </FORM>
+
+
+     <div class="form-actions">
+      	<div class=span3>
+
+         <!-- display channel contents -->
+         <table class="table table-condensed table-striped table-bordered">
+          
+		  <-- Plop in channel contents here -->
+		  {% include 'incl_channel.html' %}
+
+         </table>
+
+      </div>
+    </div>
+
+{% endfor %}
+
+
+
+{% endblock %}

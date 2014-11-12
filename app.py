@@ -1,9 +1,9 @@
 from gevent import monkey
 monkey.patch_all()
 
-import time
+import time, os
 from threading import Thread
-from flask import Flask, render_template, session, request
+from flask import Flask, render_template, session, request, url_for
 from flask.ext.socketio import SocketIO, emit, join_room, leave_room
 import base64
 
@@ -13,25 +13,39 @@ app.config['SECRET_KEY'] = 'adajjsjdkjljskjflas444'
 socketio = SocketIO(app)
 thread = None
 
+photo_lib_path = './static/library/'
+library_paths = {}
+
+def launch_bgthread():
+    global thread
+    if thread is None:
+        thread = Thread(target=background_thread)
+        thread.start()
 
 
 def background_thread():
     """Example of how to send server generated events to clients."""
-    count = 0
+    count = 3
     while True:
         count += 1
 
         #display loaded image
 
         #load new image.
-        imgpath = "./static/" + str(count) + ".png"
-        print "Showing: " + imgpath
-        with open(imgpath, "rb") as image_file:  # grab image off disk
-            encoded_string = base64.b64encode(image_file.read()) # encode image to base64 string
+#        imgpath = "./static/" + str(count) + ".png"
+#        print "Showing: " + imgpath
+#        with open(imgpath, "rb") as image_file:  # grab image off disk
+#            encoded_string = base64.b64encode(image_file.read()) # encode image to base64 string
 
-        socketio.emit('load_image',
-                      {'data': encoded_string},
-                      namespace='/test')  # send string to client for it to show
+#        socketio.emit('load_image',
+#                      {'data': encoded_string},
+#                      namespace='/test')  # send string to client for it to show
+
+        new_url = str(count) + ".png"  # 'static' folder will be added on client html side
+
+        socketio.emit('load_image_url',
+                      {'data': new_url},
+                      namespace='/test')  # send url of photo to client
 
         print "done loading"
 
@@ -44,21 +58,49 @@ def background_thread():
 
 
         print "done displaying"
-        if count > 2:
-            count = 0
+        if count == 6:
+            count = 3
+
+
+def get_directory_structure(rootdir):
+    """
+    Creates a nested dictionary that represents the folder structure of rootdir
+    """
+    dir = {}
+    print rootdir
+    rootdir = rootdir.rstrip(os.sep)
+    print rootdir
+    start = rootdir.rfind(os.sep) + 1
+    print start 
+    for path, dirs, files in os.walk(rootdir):
+        folders =path[start:].split(os.sep)
+        #keep '.' folder from stinking up our dict
+        if folders <> ['library']:
+            subdir = dict.fromkeys(files)
+            parent = reduce(dict.get, folders[:0], dir)
+            parent[folders[-1]] = subdir
+    return dir
+
 
 
 @app.route('/')
 def index():
-    global thread
-    if thread is None:
-        thread = Thread(target=background_thread)
-        thread.start()
+    #launch background thread if not already running.
+    launch_bgthread()
+    #library_paths = get_directory_structure(photo_lib_path)  # create dictionary
+    #return page
     return render_template('index.html')
 
-@app.route('/dispimg')
-def dispimg():
-    return render_template('index.html')    
+@app.route('/client/<client_id>')
+def client_access(client_id):
+    #launch background thread if not already running.
+    launch_bgthread()
+    return render_template('client.html',client_id=client_id)
+
+@app.route('/channels')
+def channels():
+    library_paths = get_directory_structure(photo_lib_path)  # create dictionary
+    return render_template('channels.html',library_paths=library_paths)    
 
 
 @socketio.on('my event', namespace='/test')
