@@ -1,9 +1,17 @@
+#
+#  By: Evan Jensen (evanmj@gmail.com)
+#
+#
+#  TODO: changing channel works, but the loop still goes, which is temporary anyway, but...
+#        basically it tries to finish showing the folder with the new channel being passed to the client,
+#        but with the old file name.
+
 from gevent import monkey
 monkey.patch_all()
 
 import time, os
 from threading import Thread
-from flask import Flask, render_template, session, request, url_for
+from flask import Flask, render_template, session, request, url_for, redirect, g
 from flask.ext.socketio import SocketIO, emit, join_room, leave_room
 import base64
 
@@ -15,7 +23,7 @@ thread = None
 
 photo_lib_path = './static/library/' #do not change
 library_paths = {}
-
+current_channel = 'landscape' #temporary
 
 
 def launch_bgthread():
@@ -27,29 +35,38 @@ def launch_bgthread():
 
 def background_thread():
     """Example of how to send server generated events to clients."""
+    global current_channel  #use global current_channel
+
     count = 3
     while True:
         count += 1
+    
+        library_paths = get_directory_structure(photo_lib_path)  # create dictionary of photos
 
-        new_url = str(count) + ".png"  # 'static' folder will be added on client html side
+        #loop the current channel for a photo to show
+        print 'using images from channel: ' + current_channel
+        for photo_name in library_paths[current_channel]:
+            print photo_name
 
-        socketio.emit('load_image_url',
-                      {'data': new_url},
-                      namespace='/test')  # send url of photo to client
+            new_url = photo_name  # '/static/library' path will be added on client html side
 
-        print "done loading"
+            socketio.emit('load_image_url',
+                          {'data': new_url, 'current_channel': current_channel},
+                          namespace='/test')  # send url of photo to client
 
-        time.sleep(10)
+            print "done loading"
 
-        print "displaying..."
-        socketio.emit('display_image',
-                      {'data': True},
-                      namespace='/test')
+            time.sleep(10)
+
+            print "displaying..."
+            socketio.emit('display_image',
+                           {'data': True},
+                           namespace='/test')
 
 
-        print "done displaying"
-        if count == 6:
-            count = 3
+            print "done displaying"
+            if count == 6:
+                count = 3
 
 
 def get_directory_structure(rootdir):
@@ -57,11 +74,8 @@ def get_directory_structure(rootdir):
     Creates a nested dictionary that represents the folder structure of rootdir
     """
     dir = {}
-    print rootdir
     rootdir = rootdir.rstrip(os.sep)
-    print rootdir
     start = rootdir.rfind(os.sep) + 1
-    print start 
     for path, dirs, files in os.walk(rootdir):
         folders =path[start:].split(os.sep)
         #keep '.' folder from stinking up our dict
@@ -83,15 +97,29 @@ def index():
 
 @app.route('/client/<client_id>')
 def client_access(client_id):
+    global current_channel
     #launch background thread if not already running.
     launch_bgthread()
     return render_template('client.html',client_id=client_id)
+
+
+#@app.route('/client_new')
+#def client_new():
+    #TODO: Make this function grab the next open client number
+#    return redirect(url_for('/client')+'/1')
 
 @app.route('/channels')
 def channels():
     library_paths = get_directory_structure(photo_lib_path)  # create dictionary
     return render_template('channels.html',library_paths=library_paths)    
 
+@app.route('/setchannel/<new_channel>')
+def new_channel(new_channel):
+    global current_channel 
+    # TODO: Validate!!!
+    print 'changing channel from: ' + current_channel + ' to: ' + new_channel
+    current_channel = new_channel
+    return redirect(request.args.get('next') or url_for('index'))  #return page the user wanted, or index if none reqd.
 
 @socketio.on('my event', namespace='/test')
 def test_message(message):
