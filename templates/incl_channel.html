@@ -5,16 +5,13 @@
 
 
 {% for file_name, sub_value in value.iteritems() %}
-        <div class="col-sm-6 col-md-3">
 
-          <div class="thumbnail">
-                <A HREF="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}">
-                    <IMG SRC="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}" WIDTH=192>
-                </A>
-          </div>
-          <div class="caption">
-              {{ file_name }}
-          </div>
+        <div class="col-xs-3">
+            {{ file_name }}
+            <A HREF="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}" class="thumbnail">
+                <IMG SRC="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}" WIDTH=192>
+            </a>
         </div>
+
 
 {% endfor %}
