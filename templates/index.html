@@ -2,17 +2,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h4 class="text-info">Welcome to Framex0r:</h4>
+
 {% include 'flash.html' %}
 
-  <div class="form-actions">
-    <div class=span3>
-
+  <div class="row">
+    <div class="col-md-4">
+      <div class="form-actions">
         <FORM METHOD="LINK" ACTION="{{ url_for('channels') }}">
-	    <button type="submit" class="btn btn-success btn-large btn-block">Channels</button>
+	    <button type="submit" class="btn btn-primary pull-right btn-large">Prev Channel</button>
 	</FORM>
-
+      </div>
     </div>
+
+    <div class="col-md-4">
+      <div class="text-center">
+         <h3>Current Channel:</h3><BR>
+         <h2  class="text-info">{{ current_channel }}</h2>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="form-actions">
+        <FORM METHOD="LINK" ACTION="{{ url_for('channels') }}">
+	    <button type="submit" class="btn btn-primary pull-left btn-large">Next Channel</button>
+	</FORM>
+      </div>
+    </div>
+
+
+
   </div>
 
 {% endblock %}

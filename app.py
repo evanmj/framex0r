@@ -1,6 +1,8 @@
 #  framex0r
 #  By: Evan Jensen (evanmj@gmail.com)
 #
+#  TODO: setting a channel from any screen should bring you back to the screen you were on (see /arm request return)
+#
 #
 #  TODO: changing channel works, but the loop still goes, which is temporary anyway, but...
 #        basically it tries to finish showing the folder with the new channel being passed to the client,
@@ -30,7 +32,7 @@ monkey.patch_all()
 
 import time, os
 from threading import Thread
-from flask import Flask, render_template, session, request, url_for, redirect, g
+from flask import Flask, render_template, session, request, url_for, redirect, g, flash
 from flask.ext.socketio import SocketIO, emit, join_room, leave_room
 import base64
 
@@ -122,10 +124,10 @@ def get_directory_structure(rootdir):
 @app.route('/')
 def index():
     #launch background thread if not already running.
+    global current_channel
     launch_bgthread()
-    #library_paths = get_directory_structure(photo_lib_path)  # create dictionary
-    #return page
-    return render_template('index.html')
+    library_paths = get_directory_structure(photo_lib_path)  # create dictionary
+    return render_template('index.html',library_paths=library_paths,current_channel=current_channel)
 
 @app.route('/client/<client_id>')
 def client_access(client_id):
@@ -151,6 +153,7 @@ def new_channel(new_channel):
     # TODO: Validate!!!
     print 'changing channel from: ' + current_channel + ' to: ' + new_channel
     current_channel = new_channel
+    flash('Channel: ' + new_channel + ' set.')
     return redirect(url_for('channels'))  #return page the user wanted, or index if none reqd.
 
 
