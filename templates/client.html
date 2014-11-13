@@ -33,22 +33,22 @@
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
             socket.on('connect', function() {
-                socket.emit('my event', {data: 'I\'m connected!'});
+                socket.emit('my event', {data: 'Client {{ client_id }} connected!'});
             });
 
-            var _image = $('<img>');
+            // listen for 'whos_there' requests from server.  Send back my ID if he asks.
+            socket.on('whos_there', function() {
+                socket.emit('im_here', {data: '{{ client_id }}'});
+            });
 
-            // Pre-load image so we can sync the display up better.
-            //socket.on('load_image', function(msg) {
-            //    $('#debug2').append('loading image...<br>');
-            //    _image.attr('src', 'data:image/png;base64,' + msg.data);
-            //    $('#debug2').append('image loaded.<br>');
-            //});
+            // Join room, named my client_id so I can listen for responses sent only to my room.
+            // TODO.
+
+            var _image = $('<img>');
 
             // Pre-load image so we can sync the display up better.  (USING URL THIS TIME)
             socket.on('load_image_url', function(msg) {
                 $('#debug2').append('loading image...<br>');
-                //_image.attr('src', '{{ url_for('static',filename='library/' + 'landscape') }}' + '/' + msg.data);
                 _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
                 $('#debug2').append('image loaded.<br>');
             });
@@ -60,9 +60,6 @@
 		$('#img').fadeOut('slow',function(){
 		    $(this).append(_image).fadeIn('slow');
 		});
-
-//                $('#img').append(_image);
-
 
                 $('#debug2').append('display complete.<br>');
             });

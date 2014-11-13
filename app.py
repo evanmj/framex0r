@@ -8,7 +8,8 @@
 #
 #  TODO: Verify files found are valid image extension and maybe check file sigs
 #
-
+#  TODO: Client list populated, but never depopulated.
+#
 
 from gevent import monkey
 monkey.patch_all()
@@ -27,8 +28,8 @@ thread = None
 
 photo_lib_path = './static/library/' #do not change
 library_paths = {}
-current_channel = 'landscape' #temporary
-
+current_channel = 'landscape' #temporary until exists a 'global' channel.
+current_clients = []          #list of clients queried
 
 def launch_bgthread():
     global thread
@@ -41,15 +42,18 @@ def background_thread():
     """Example of how to send server generated events to clients."""
     global current_channel  #use global current_channel
 
-    count = 3
+    count = 1
     while True:
-        count += 1
     
+        get_attached_clients()
+
         library_paths = get_directory_structure(photo_lib_path)  # create dictionary of photos
 
         #loop the current channel for a photo to show
-        print 'using images from channel: ' + current_channel
+        print 'Using images from channel: ' + current_channel
+
         for photo_name in library_paths[current_channel]:
+            
             print photo_name
 
             new_url = photo_name  # '/static/library' path will be added on client html side
@@ -58,20 +62,22 @@ def background_thread():
                           {'data': new_url, 'current_channel': current_channel},
                           namespace='/test')  # send url of photo to client
 
-            print "done loading"
+            print 'Cmd sent to load image:    ' + photo_name + ' of channel: ' + current_channel
 
-            time.sleep(10)
+            time.sleep(3)
 
-            print "displaying..."
             socketio.emit('display_image',
                            {'data': True},
                            namespace='/test')
 
+            print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel
 
-            print "done displaying"
-            if count == 6:
-                count = 3
+            
 
+def get_attached_clients():
+    print 'Sending Client \'Who\'s There\'?'
+    socketio.emit('whos_there',
+                 namespace='/test')
 
 def get_directory_structure(rootdir):
     """
@@ -88,8 +94,6 @@ def get_directory_structure(rootdir):
             parent = reduce(dict.get, folders[:0], dir)
             parent[folders[-1]] = subdir
     return dir
-
-
 
 @app.route('/')
 def index():
@@ -124,6 +128,21 @@ def new_channel(new_channel):
     print 'changing channel from: ' + current_channel + ' to: ' + new_channel
     current_channel = new_channel
     return redirect(url_for('channels'))  #return page the user wanted, or index if none reqd.
+
+# watch for responses to our 'whos_there' request.  They will provide their client ID.
+@socketio.on('im_here', namespace='/test')
+def im_here(message):
+    global current_clients
+    # add client to the list if it is not already there.
+    if current_clients.count(message['data']) == 0:
+        current_clients.append(message['data'])
+    print 'Current Client List:  ' + str([x.encode('ascii') for x in current_clients])
+    print 'Client Reported Back: ' + message['data']
+
+
+
+
+
 
 @socketio.on('my event', namespace='/test')
 def test_message(message):
