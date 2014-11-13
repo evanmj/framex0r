@@ -12,8 +12,7 @@
  {% for channel_name, value in library_paths.iteritems() %}
 
     <div class="row">
-
-  <h4 class="text-info">{{ channel_name }}:</h4>
+      <h4 class="text-info">{{ channel_name }}:</h4>
 
 	<FORM METHOD="LINK" ACTION="{{'setchannel/' + channel_name}}">
                   <button type="submit" class="btn btn-success btn-small btnblock">Set</button>
@@ -22,8 +21,7 @@
          <!-- display channel contents (photos) -->
 		  <!-- Plop in channel contents here -->
 		  {% include 'incl_channel.html' %}
-
-  </div>
+    </div>
 
  {% endfor %}
 
