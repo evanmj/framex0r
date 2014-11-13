@@ -5,31 +5,23 @@
 
 {% include 'flash.html' %}
 
+
 <!-- display channels -->
-{% for key, value in library_paths.iteritems() %}
+ {% for channel_name, value in library_paths.iteritems() %}
 
-  <h4 class="text-info">{{ key }}:</h4>
+  <h4 class="text-info">{{ channel_name }}:</h4>
 
-	<FORM METHOD="LINK" ACTION="{{'setchannel/' + key}}">
+	<FORM METHOD="LINK" ACTION="{{'setchannel/' + channel_name}}">
                   <button type="submit" class="btn btn-success btn-small btnblock">Set</button>
         </FORM>
 
          <!-- display channel contents (photos) -->
-
- 		<table class="table table-condensed table-striped table-bordered">
-
 		  <!-- Plop in channel contents here -->
 		  {% include 'incl_channel.html' %}
-          
-               </table>
 
 
-       
-       
 
-
-{% endfor %}
-
+ {% endfor %}
 
 
 {% endblock %}

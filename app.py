@@ -79,8 +79,10 @@ def background_thread():
 
             new_url = photo_name  # '/static/library' path will be added on client html side
 
+            new_caption = 'hello.'
+
             socketio.emit('load_image_url',
-                          {'data': new_url, 'current_channel': current_channel},
+                          {'data': new_url, 'current_channel': current_channel, 'caption': new_caption}, #temp: send exif placeholder
                           namespace='/test')  # send url of photo to client
 
             print 'Cmd sent to load image:    ' + photo_name + ' of channel: ' + current_channel
@@ -88,7 +90,7 @@ def background_thread():
             time.sleep(3)
 
             socketio.emit('display_image',
-                           {'data': True},
+                           {'data': True, 'current_channel': current_channel, 'caption': new_caption},
                            namespace='/test')
 
             print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel

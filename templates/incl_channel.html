@@ -2,18 +2,19 @@
 <!-- key here is the folder name -->
 <!-- sub_key is the names in the folder, only one level deep (as designed) -->
 <!-- sub_value is "None" usually -->
-{% for sub_key, sub_value in value.iteritems() %}
-  
 
-     <TD>
 
-          {{ sub_key }}<BR>
-          <A HREF="{{ url_for('static', filename="library/" + key + "/" + sub_key) }}">
-          <IMG SRC="{{ url_for('static', filename="library/" + key + "/" + sub_key) }}" WIDTH=192>
-          </A>
-	  
-     </TD>
-     
+{% for file_name, sub_value in value.iteritems() %}
+        <div class="col-sm-6 col-md-3">
 
+          <div class="thumbnail">
+                <A HREF="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}">
+                    <IMG SRC="{{ url_for('static', filename="library/" + channel_name + "/" + file_name) }}" WIDTH=192>
+                </A>
+          </div>
+          <div class="caption">
+              {{ file_name }}
+          </div>
+        </div>
 
 {% endfor %}

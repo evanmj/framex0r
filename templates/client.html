@@ -1,30 +1,18 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <style>
-        html,body{
-            margin:0;
-            height:100%;
-            overflow:hidden;
-            background-color: black;
-            color: grey;
-        }
-        img{
-            min-height:100%;
-            min-width:100%;
-            height:auto;
-            width:auto;
-            position:absolute;
-            top:0; bottom:0;
-            margin:auto auto;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='css/clientstyle.css') }} " />
+
     <title>Framex0r - Client {{ client_id }}</title>
     <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
     <script type="text/javascript" charset="utf-8">
 
         $(document).ready(function(){
+
+            // Hide caption by default.
+            //$('#caption').hide();
+
             namespace = '/test'; // change to an empty string to use the global namespace
 
             // the socket.io documentation recommends sending an explicit package upon connection
@@ -56,7 +44,10 @@
             // Pre-load image so we can sync the display up better.  (USING URL THIS TIME)
             socket.on('load_image_url', function(msg) {
                 $('#debug2').append('loading image...<br>');
+                // Set image
+
                 _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
+
                 $('#debug2').append('image loaded.<br>');
             });
 
@@ -64,11 +55,30 @@
             socket.on('display_image', function(msg) {
                 $('#debug2').append('starting display...<br>');
 
-		$('#img').fadeOut('slow',function(){
-		    $(this).append(_image).fadeIn('slow');
-		});
+                $('#img').attr('alt',msg.caption); // Add caption to alt txt.                   
+
+                // Show caption if one exists.
+                if(msg.caption != '') {
+                   $('#caption').addClass('add_caption');
+                   $('#caption').replaceWith($('#img').attr('alt'));
+                }
+                else {
+                   $('#caption').removeClass('add_caption'); 
+                   $('#caption').replaceWith('');
+                }
+
+                $('#img').fadeOut('slow',function(){
+                    $(this).append(_image).fadeIn('slow');
+                });
+                    
+
+                // Show caption (Exif, etc, built in python app.py
+                $('#caption').replaceWith(msg.caption);
+
 
                 $('#debug2').append('display complete.<br>');
+
+
             });
 
 
@@ -78,6 +88,9 @@
 <body>
     <div id="debug"></div>
     <div id="debug2"></div>
+
     <div id="img"></div>
+    <div id="caption"></div>
+
 </body>
 </html>
