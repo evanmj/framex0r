@@ -32,6 +32,7 @@
 
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
+            // TODO: This not received on the other end?
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'Client {{ client_id }} connected!'});
             });
@@ -42,7 +43,13 @@
             });
 
             // Join room, named my client_id so I can listen for responses sent only to my room.
-            // TODO.
+            socket.emit('join', {room: '{{ client_id }}'});
+
+            // Confirmation of joined room for logging purposes.
+            socket.on('room_joined', function(msg) {
+                $('#debug2').append('Server confirmed room join: ' + msg.data + '<BR>');
+            });
+
 
             var _image = $('<img>');
 

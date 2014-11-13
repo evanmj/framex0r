@@ -144,37 +144,36 @@ def im_here(message):
 
 
 
-@socketio.on('my event', namespace='/test')
-def test_message(message):
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': message['data'], 'count': session['receive_count']})
+#@socketio.on('my event', namespace='/test')
+#def test_message(message):
+#    session['receive_count'] = session.get('receive_count', 0) + 1
+#    emit('my response',
+#         {'data': message['data'], 'count': session['receive_count']})
 
 
-@socketio.on('my broadcast event', namespace='/test')
-def test_message(message):
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': message['data'], 'count': session['receive_count']},
-         broadcast=True)
+#@socketio.on('my broadcast event', namespace='/test')
+#def test_message(message):
+#    session['receive_count'] = session.get('receive_count', 0) + 1
+#    emit('my response',
+#         {'data': message['data'], 'count': session['receive_count']},
+#         broadcast=True)
 
-
+#when a client joins it's image listening room.  One client is typical for a room, but duplicate clients is fine.
 @socketio.on('join', namespace='/test')
 def join(message):
-    join_room(message['room'])
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': 'In rooms: ' + ', '.join(request.namespace.rooms),
-          'count': session['receive_count']})
+    join_room(message['room'])  #join the room 'client_id' as sent from the client.
+    emit('room_joined',
+         {'data': 'Successfully Joined Room: ' + ', '.join(request.namespace.rooms)})
 
 
-@socketio.on('leave', namespace='/test')
-def leave(message):
-    leave_room(message['room'])
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my response',
-         {'data': 'In rooms: ' + ', '.join(request.namespace.rooms),
-          'count': session['receive_count']})
+
+#@socketio.on('leave', namespace='/test')
+#def leave(message):
+#    leave_room(message['room'])
+#    session['receive_count'] = session.get('receive_count', 0) + 1
+#    emit('my response',
+#         {'data': 'In rooms: ' + ', '.join(request.namespace.rooms),
+#          'count': session['receive_count']})
 
 
 @socketio.on('my room event', namespace='/test')
