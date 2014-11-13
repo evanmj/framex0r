@@ -1,4 +1,4 @@
-#
+#  framex0r
 #  By: Evan Jensen (evanmj@gmail.com)
 #
 #
@@ -8,7 +8,21 @@
 #
 #  TODO: Verify files found are valid image extension and maybe check file sigs
 #
-#  TODO: Client list populated, but never depopulated.
+#  TODO: Push separate images to all connected clients
+#
+#  TODO: check if any image names match client name prior to assigning an image.
+#
+#  TODO: (idea)- index page is current channel and channel flip page (next / prev)
+#
+#  TODO: Fix full screen display on client.html css
+#
+#  TODO: Investigate EXIF overlay
+#
+#  TODO: Status page that shows all connected clients (rooms)
+#
+#  TODO: Add sys info to respoinse of 'whos_there' to make it useful again... maybe
+#
+#  TODO: 
 #
 
 from gevent import monkey
@@ -45,16 +59,23 @@ def background_thread():
     count = 1
     while True:
     
-        get_attached_clients()
+        #get_attached_clients()   # No longer needed, rooms work better.
 
         library_paths = get_directory_structure(photo_lib_path)  # create dictionary of photos
 
         #loop the current channel for a photo to show
         print 'Using images from channel: ' + current_channel
 
+        #loop through rooms giving each an image.  A 'room' is a connected client or possibly a duplicate client.
+        for namespace, roomdict in socketio.rooms.iteritems():
+            print 'Active Namespaces: ' + namespace
+            for room_name, object in roomdict.iteritems():
+                this_room = str(room_name) #convert the tuple to a string for ease of use.
+                print "Room Active: " + this_room                
+                
+
+        # TODO: This loop needs to get smarter and jammed into the loop above to push one image to each client.
         for photo_name in library_paths[current_channel]:
-            
-            print photo_name
 
             new_url = photo_name  # '/static/library' path will be added on client html side
 
@@ -72,8 +93,9 @@ def background_thread():
 
             print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel
 
-            
+         
 
+#DEPRECATED by socketio.rooms functionality
 def get_attached_clients():
     print 'Sending Client \'Who\'s There\'?'
     socketio.emit('whos_there',
@@ -129,6 +151,8 @@ def new_channel(new_channel):
     current_channel = new_channel
     return redirect(url_for('channels'))  #return page the user wanted, or index if none reqd.
 
+
+#DEPRECATED by socketio.rooms functionality
 # watch for responses to our 'whos_there' request.  They will provide their client ID.
 @socketio.on('im_here', namespace='/test')
 def im_here(message):
