@@ -8,6 +8,14 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
     <script type="text/javascript" charset="utf-8">
 
+    function preload(arrayOfImages) {
+        $(arrayOfImages).each(function(){
+            $('<img/>')[0].src = this;
+            // Alternatively you could use:
+            // (new Image()).src = this;
+        });
+    }
+
         $(document).ready(function(){
 
             // Hide caption by default.
@@ -41,15 +49,18 @@
 
             var _image = $('<img>');
 
-            // Pre-load image so we can sync the display up better.  (USING URL THIS TIME)
+            // Pre-load image so we can sync the display up better. 
             socket.on('load_image_url', function(msg) {
                 $('#debug2').append('loading image...<br>');
                 // Set image
 
-                _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
+                // works: _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
+
+                preload(['{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data]);
 
                 $('#debug2').append('image loaded.<br>');
             });
+
 
             // Display the image when commanded.
             socket.on('display_image', function(msg) {
@@ -67,10 +78,12 @@
                    $('#caption').replaceWith('');
                 }
 
-                $('#img').fadeOut('slow',function(){
-                    $(this).append(_image).fadeIn('slow');
+                // Fade out, then in with new image!
+                $('#img').fadeOut(3000,function(){
+                    _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
+                    $(this).append(_image).fadeIn(3000);
                 });
-                    
+
 
                 // Show caption (Exif, etc, built in python app.py
                 $('#caption').replaceWith(msg.caption);
@@ -78,8 +91,8 @@
 
                 $('#debug2').append('display complete.<br>');
 
-
             });
+
 
 
         });

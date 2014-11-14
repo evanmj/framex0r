@@ -75,61 +75,55 @@ def background_thread():
                 this_room = str(room_name) #convert the tuple to a string for ease of use.
                 print "Room Active: " + this_room                
                 
+        print build_exif_string('static/library/landscape/Landscape.jpg')
+        print get_exif_orientation('static/library/landscape/Landscape.jpg')
 
         # TODO: This loop needs to get smarter and jammed into the loop above to push one image to each client.
         for photo_name in library_paths[current_channel]:
 
             new_url = photo_name  # '/static/library' path will be added on client html side
 
-            #build exif data caption, and determine H or L orientation from exif (if possible).
-            new_caption = build_exif_string('static/library/' + current_channel + '/' + photo_name)
-            photo_orientation = get_exif_orientation('static/library/' + current_channel + '/' + photo_name)
+            new_caption = 'hello.'
 
             socketio.emit('load_image_url',
-                          {'data': new_url, 'current_channel': current_channel, 
-                           'caption': new_caption, 'photo_orientation': photo_orientation}, 
-                          namespace='/test')  # send url of photo to client, current channel, exif info, and orientation.
+                          {'data': new_url, 'current_channel': current_channel, 'caption': new_caption}, #temp: send exif placeholder
+                          namespace='/test')  # send url of photo to client
 
             print 'Cmd sent to load image:    ' + photo_name + ' of channel: ' + current_channel
 
-            time.sleep(10)
+            time.sleep(3)
 
             socketio.emit('display_image',
-                           {'data': new_url, 'current_channel': current_channel, 'caption': new_caption},
+                           {'data': True, 'current_channel': current_channel, 'caption': new_caption},
                            namespace='/test')
 
             print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel
 
 def build_exif_string(img_path):
+
     exif_string = ''
     f = open(img_path, 'rb')
+
     # Return Exif tags
-    tags = exifread.process_file(f, details=False)
-    if 'Image Model' in tags.keys():
-        exif_string += str(tags['Image Model']) + ' | ' 
-    if 'EXIF FocalLength' in tags.keys():
-        exif_string += str(tags['EXIF FocalLength']) + 'mm '
-    if 'EXIF FNumber' in tags.keys():
-        exif_string += 'F' + str(tags['EXIF FNumber']) + ' '
-    if 'EXIF ExposureTime' in tags.keys():
-        exif_string += str(tags['EXIF ExposureTime']) + '\" '
-    if 'EXIF ISOSpeedRatings' in tags.keys():
-        exif_string += 'ISO' + str(tags['EXIF ISOSpeedRatings']) + ' | '
-    if 'EXIF DateTimeDigitized' in tags.keys():
-        exif_string += str(tags['EXIF DateTimeDigitized']) + ' | '
-    if 'Image Artist' in tags.keys():
-        exif_string += str(tags['Image Artist'])
+    tags = exifread.process_file(f)
+
+    exif_string += str(tags['Image Model']) + ' | '
+    exif_string += str(tags['EXIF FocalLength']) + 'mm '
+    exif_string += 'F' + str(tags['EXIF FNumber']) + ' '
+    exif_string += str(tags['EXIF ExposureTime']) + '\" '
+    exif_string += 'ISO' + str(tags['EXIF ISOSpeedRatings']) + ' | '
+    exif_string += str(tags['EXIF DateTimeDigitized'])
+
+
     return exif_string
     
     
 def get_exif_orientation(img_path):
+
     orientation_string = ''
-    f = open(img_path, 'rb')    
-    tags = exifread.process_file(f, details = False)
-    if 'Image Orientation' in tags.keys():
-        orientation_string = (str(tags['Image Orientation'])[:1]).upper()
-    else:
-        orientation_string = 'H'  # Safe to default to H.
+    f = open(img_path, 'rb')
+    tags = exifread.process_file(f)
+    orientation_string = (str(tags['Image Orientation'])[:1]).upper()
     return orientation_string    
 
 #DEPRECATED by socketio.rooms functionality
