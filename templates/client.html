@@ -65,27 +65,25 @@
                 //$('#debug2').append('starting display...<br>');
 
 
-                // Show caption if one exists.
-                if(msg.caption != '') {
-                   $('#caption').addClass('add_caption');
-                   $('#caption').replaceWith($('#img').attr('alt'));
-                }
-                else {
-                   $('#caption').removeClass('add_caption'); 
-                   $('#caption').replaceWith('');
-                }
-
                 // Fade out, then in with new image!
                 $('#img').fadeOut(3000,function(){
                     _image.attr('src', '{{ url_for('static',filename='library/') }}' + msg.current_channel + '/' + msg.data);
                     _image.attr('alt',msg.caption); // Add caption to alt txt.                   
+                
+                    // Show caption if one exists.
+                    if(msg.caption != '') {
+                       $('#img').addClass('add_caption');
+                    }
+                    else {
+                       $('#caption').removeClass('add_caption'); 
+                    }
+  ///// TODO ^ class does not get removed.
+
                     $(this).append(_image).fadeIn(3000);
                 });
 
-                 // Filling alt tags now... 
-                // Show caption (Exif, etc, built in python app.py
-                //$('#caption').replaceWith(msg.caption);
 
+                
                 
                 //$('#debug2').append('display complete.<br>');
 
