@@ -20,7 +20,9 @@
 #
 #  TODO: Add sys info to respoinse of 'whos_there' to make it useful again... maybe
 #
-#  TODO: 
+#  TODO: TEST DEALOCATION.
+#
+#  TODO: ADD ROOM TO SOCKET MESSAGES NOW THAT THEY ARE ROOM SPECIFIC.
 #
 
 from gevent import monkey
@@ -53,13 +55,25 @@ def launch_bgthread():
 def background_thread():
     """Example of how to send server generated events to clients."""
     global current_channel  #use global current_channel
-
+    library_paths = get_directory_structure(photo_lib_path) 
+    previous_allocations = {}
     count = 1
     while True:
     
         #get_attached_clients()   # No longer needed, rooms work better.
 
-        library_paths = get_directory_structure(photo_lib_path)  # create dictionary of photos
+        previous_allocations = library_paths # store old path data so we can re-populate our allocation record.
+        
+        #read fresh copy of file paths off disk
+        library_paths = get_directory_structure(photo_lib_path) 
+        
+        
+        #re-populate our allocation records so we show new images first and don't duplicate.
+        #The images need to be in a round robin, but don't forget the data is dynmaic! A new image can hop in at any loop.
+        for photo_name in library_paths[current_channel]:
+            if previous_allocations[current_channel][photo_name] == 'allocated':
+                library_paths[current_channel][photo_name] = 'allocated'
+
 
         #loop the current channel for a photo to show
         print 'Using images from channel: ' + current_channel
@@ -112,19 +126,24 @@ def background_thread():
                     for photo_name in library_paths[current_channel]:
                 
                         #look for a photo that is not already displayed.                
-                        if True:  #TODO:! Verify photo not shown this round!
-
-
-
+                        if library_paths[current_channel][photo_name] == None:
                             #we found a match!
                             print 'Photo: ' + photo_name + ' was not yet displayed: Allocating to client: ' + this_room 
                             new_url = photo_name
+                            library_paths[current_channel][photo_name] = 'allocated'
                             break # leave loop now that we found a good photo to use.
-         
+                      
                     if new_url == '':
                         #todo: if we made it here, we could not find a photo, but we are not in window mode, so we can start over on the list.
-                        
-                        print 'No matching photo found for client: ' + this_room + ' in channel: ' + current_channel
+                        print 'Deallocating all images so they can be shown again (looped).'
+                        for photo_name in library_paths[current_channel]:
+                            #steal first photo in list, deallocate the rest.
+                            if new_url == '':
+                                new_url = photo_name
+                                library_paths[current_channel][photo_name] = 'allocated'
+                                continue #next element.
+                            #we stole the first photo in the list to show, now set the rest back to none.
+                            library_paths[current_channel][photo_name] = None
 
                 #hopefully we have a URL by now...     
                 if new_url != '':
