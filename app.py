@@ -34,7 +34,7 @@ import time, os
 from threading import Thread
 from flask import Flask, render_template, session, request, url_for, redirect, g, flash
 from flask.ext.socketio import SocketIO, emit, join_room, leave_room
-import base64
+import exifread
 
 app = Flask(__name__)
 app.debug = True
@@ -81,7 +81,9 @@ def background_thread():
 
             new_url = photo_name  # '/static/library' path will be added on client html side
 
-            new_caption = 'hello.'
+            #build exif data caption, and determine H or L orientation from exif (if possible).
+            new_caption = build_exif_string('static/library/' + current_channel + '/' + photo_name)
+            photo_orientation = get_exif_orientation('static/library/landscape/Landscape.jpg')
 
             socketio.emit('load_image_url',
                           {'data': new_url, 'current_channel': current_channel, 'caption': new_caption}, #temp: send exif placeholder
@@ -97,7 +99,37 @@ def background_thread():
 
             print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel
 
-         
+def build_exif_string(img_path):
+    exif_string = ''
+    f = open(img_path, 'rb')
+    # Return Exif tags
+    tags = exifread.process_file(f, details=False)
+    if 'Image Model' in tags.keys():
+        exif_string += str(tags['Image Model']) + ' | ' 
+    if 'EXIF FocalLength' in tags.keys():
+        exif_string += str(tags['EXIF FocalLength']) + 'mm '
+    if 'EXIF FNumber' in tags.keys():
+        exif_string += 'F' + str(tags['EXIF FNumber']) + ' '
+    if 'EXIF ExposureTime' in tags.keys():
+        exif_string += str(tags['EXIF ExposureTime']) + '\" '
+    if 'EXIF ISOSpeedRatings' in tags.keys():
+        exif_string += 'ISO' + str(tags['EXIF ISOSpeedRatings']) + ' | '
+    if 'EXIF DateTimeDigitized' in tags.keys():
+        exif_string += str(tags['EXIF DateTimeDigitized']) + ' | '
+    if 'Image Artist' in tags.keys():
+        exif_string += str(tags['Image Artist'])
+    return exif_string
+    
+    
+def get_exif_orientation(img_path):
+    orientation_string = ''
+    f = open(img_path, 'rb')    
+    tags = exifread.process_file(f, details = False)
+    if 'Image Orientation' in tags.keys():
+        orientation_string = (str(tags['Image Orientation'])[:1]).upper()
+    else:
+        orientation_string = 'H'  # Safe to default to H.
+    return orientation_string    
 
 #DEPRECATED by socketio.rooms functionality
 def get_attached_clients():
