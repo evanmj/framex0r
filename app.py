@@ -10,15 +10,11 @@
 #
 #  TODO: Verify files found are valid image extension and maybe check file sigs
 #
-#  TODO: Push separate images to all connected clients
-#
-#  TODO: check if any image names match client name prior to assigning an image.
+#  TODO: Push separate images to all connected clients -  client allocation record needs tracked and reset in non-windowed channels.
 #
 #  TODO: (idea)- index page is current channel and channel flip page (next / prev)
 #
-#  TODO: Fix full screen display on client.html css
-#
-#  TODO: Investigate EXIF overlay
+#  TODO: Finish EXIF overlay in client.html / client.css
 #
 #  TODO: Status page that shows all connected clients (rooms)
 #
@@ -68,37 +64,95 @@ def background_thread():
         #loop the current channel for a photo to show
         print 'Using images from channel: ' + current_channel
 
-        #loop through rooms giving each an image.  A 'room' is a connected client or possibly a duplicate client.
+        #find out if this is a window channel or not... store it here.
+        window_channel = False  
+
+        #loop through namespaces, there should just be one for now, but we have to dig into it
         for namespace, roomdict in socketio.rooms.iteritems():
             print 'Active Namespaces: ' + namespace
+            #loop through rooms giving each an image.  A 'room' is a connected client or possibly a duplicate client.
+            
+            #find out if this is a numbered channel or not.  If so, each image has a specific client destination.
+            #look at all photo names... 
+            for photo_name in library_paths[current_channel]:
+                #look at all room names
+                for room_name, object in roomdict.iteritems():
+                    #does the first N char of the photo name match our room name?
+                    if photo_name[:len(str(room_name))] == str(room_name):
+                        window_channel = True
+                        break #leave loop early, we found what we were looking for.
+            if window_channel:
+                print "Window Channel Detected: " + current_channel
+            else:
+                print "Window Channel Not Detected: " + current_channel
+            
+            #Every room (attached client) needs a photo.  Assign them here.
             for room_name, object in roomdict.iteritems():
                 this_room = str(room_name) #convert the tuple to a string for ease of use.
-                print "Room Active: " + this_room                
+                print 'Room Active: ' + this_room                
+                new_url = ''
+
+                # is this a window channel (meaning specific images go to specific monitors)
+                if window_channel:
+                    #look through all the photos. See if one matches our client name.
+                    for photo_name in library_paths[current_channel]:
+                        #does the first N char of the photo name match our room name?
+                        if photo_name[:len(this_room)] == this_room:
+                            #we found a match!
+                            print 'Found unique monitor match: Client: ' + this_room + ' matches ' + photo_name
+                            new_url = photo_name
+                            break # leave loop now that we found a good photo to use.
+                    if new_url == '':
+                        print 'No matching photo found for client: ' + this_room + ' in window channel: ' + current_channel
+                        #todo: if we made it here, some client has a photo for it, but not this one. show blank or logo, etc.
+                        
+                # not a window channel, image free for all.
+                else:
+                    #look through all the photos. See if one matches our client name.
+                    for photo_name in library_paths[current_channel]:
                 
+                        #look for a photo that is not already displayed.                
+                        if True:  #TODO:! Verify photo not shown this round!
 
-        # TODO: This loop needs to get smarter and jammed into the loop above to push one image to each client.
-        for photo_name in library_paths[current_channel]:
 
-            new_url = photo_name  # '/static/library' path will be added on client html side
 
-            #build exif data caption, and determine H or L orientation from exif (if possible).
-            new_caption = build_exif_string('static/library/' + current_channel + '/' + photo_name)
-            photo_orientation = get_exif_orientation('static/library/' + current_channel + '/' + photo_name)
+                            #we found a match!
+                            print 'Photo: ' + photo_name + ' was not yet displayed: Allocating to client: ' + this_room 
+                            new_url = photo_name
+                            break # leave loop now that we found a good photo to use.
+         
+                    if new_url == '':
+                        #todo: if we made it here, we could not find a photo, but we are not in window mode, so we can start over on the list.
+                        
+                        print 'No matching photo found for client: ' + this_room + ' in channel: ' + current_channel
 
-            socketio.emit('load_image_url',
-                          {'data': new_url, 'current_channel': current_channel, 
-                           'caption': new_caption, 'photo_orientation': photo_orientation}, 
-                          namespace='/test')  # send url of photo to client, current channel, exif info, and orientation.
+                #hopefully we have a URL by now...     
+                if new_url != '':
 
-            print 'Cmd sent to load image:    ' + photo_name + ' of channel: ' + current_channel
+                    #build exif data caption, and determine H or L orientation from exif (if possible).
+                    new_caption = build_exif_string('static/library/' + current_channel + '/' + photo_name)
+                    photo_orientation = get_exif_orientation('static/library/' + current_channel + '/' + photo_name)
 
-            time.sleep(10)
+                    socketio.emit('load_image_url',
+                        {'data': new_url, 'current_channel': current_channel, 
+                        'caption': new_caption, 'photo_orientation': photo_orientation}, 
+                        namespace='/test')  # send url of photo to client, current channel, exif info, and orientation.
 
-            socketio.emit('display_image',
-                           {'data': new_url, 'current_channel': current_channel, 'caption': new_caption},
-                           namespace='/test')
+                    print 'Cmd sent to load image:    ' + new_url + ' of channel: ' + current_channel
 
-            print 'Cmd sent to display image: ' + photo_name + ' of channel: ' + current_channel
+                    socketio.emit('display_image',
+                        {'data': new_url, 'current_channel': current_channel, 'caption': new_caption},
+                        namespace='/test')
+
+                    print 'Cmd sent to display image: ' + new_url + ' of channel: ' + current_channel
+                        
+                else:
+                    print 'Error: No url assigned to room: ' + room_name + ' by the end of the loop. Channel: ' + current_channel
+
+
+
+        time.sleep(6)  #sleep time between image transitions.  This will eventually be a parameter... probably.
+
 
 def build_exif_string(img_path):
     exif_string = ''
