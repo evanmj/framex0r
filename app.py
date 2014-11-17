@@ -189,6 +189,9 @@ def background_thread():
         else:
             time.sleep(0.5)    
 
+
+
+
 def build_exif_string(img_path):
     exif_string = ''
     f = open(img_path, 'rb')
@@ -243,6 +246,17 @@ def get_directory_structure(rootdir):
             parent[folders[-1]] = subdir
     return dir
 
+#handle 404 nicely
+@app.errorhandler(404)
+def internal_error(error):
+    return render_template('404.html',library_paths=library_paths,current_channel=current_channel), 404
+
+#handle 500 nicely
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html',library_paths=library_paths,current_channel=current_channel), 500
+
 @app.route('/')
 def index():
     #launch background thread if not already running.
@@ -267,19 +281,20 @@ def become_client():
     if socketio.rooms:
         for namespace, roomdict in socketio.rooms.iteritems():
             for room_name, object in roomdict.iteritems():
+# TODO: BUG HERE.  doesn't work, but also should fill in starting at 1 unless taken.  for loop 1..infinity
+#and look to see if there is a room called that, if not use it, and break/continue the loop.
                 if int(room_name) > new_room:
+                    print 'setting new_room = ' + str(room_name) + ' plus one.'
                     new_room = int(room_name) + 1 # increment one above highest number found. (rooms don't have to be numbers, but I recommend it.
     else:
         #no rooms to look through, default to 1.
         new_room = 1
     print "Become Client: Giving new client-to-be room url: /client/" + str(new_room)
     return redirect('client/' + str(new_room))   
-    
 
-#@app.route('/client_new')
-#def client_new():
-    #TODO: Make this function grab the next open client number
-#    return redirect(url_for('/client')+'/1')
+@app.route('/status')
+def status():
+    return redirect(url_for('index'))    
 
 @app.route('/channels')
 def channels():
@@ -294,6 +309,7 @@ def new_channel(new_channel):
     current_channel = new_channel
     flash('Channel: ' + new_channel + ' set.')
     return redirect(url_for('channels'))  #return page the user wanted, or index if none reqd.
+
 
 
 #DEPRECATED by socketio.rooms functionality
