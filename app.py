@@ -44,6 +44,7 @@ photo_lib_path = './static/library/' #do not change
 library_paths = {}
 current_channel = 'landscape' #temporary until exists a 'global' channel.
 current_clients = []          #list of clients queried
+image_show_time_s = 10
 
 def launch_bgthread():
     global thread
@@ -55,6 +56,7 @@ def launch_bgthread():
 def background_thread():
     """Example of how to send server generated events to clients."""
     global current_channel  #use global current_channel
+    global image_show_time_s #use global sleep time between images.
     library_paths = get_directory_structure(photo_lib_path) 
     previous_allocations = {}
     count = 1
@@ -66,8 +68,11 @@ def background_thread():
         
         #read fresh copy of file paths off disk
         library_paths = get_directory_structure(photo_lib_path) 
-        
-        
+    
+        #print current channel each loop, but only if we have clients connected.    
+        if socketio.rooms:        
+            print 'Using images from channel: ' + current_channel
+
         #re-populate our allocation records so we show new images first and don't duplicate.
         #The images need to be in a round robin, but don't forget the data is dynmaic! A new image can hop in at any loop.
         for photo_name in library_paths[current_channel]:
@@ -75,14 +80,13 @@ def background_thread():
                 library_paths[current_channel][photo_name] = 'allocated'
 
 
-        #loop the current channel for a photo to show
-        print 'Using images from channel: ' + current_channel
 
         #find out if this is a window channel or not... store it here.
         window_channel = False  
 
         #loop through namespaces, there should just be one for now, but we have to dig into it
         for namespace, roomdict in socketio.rooms.iteritems():
+
             print 'Active Namespaces: ' + namespace
             #loop through rooms giving each an image.  A 'room' is a connected client or possibly a duplicate client.
             
@@ -152,16 +156,19 @@ def background_thread():
                     new_caption = build_exif_string('static/library/' + current_channel + '/' + photo_name)
                     photo_orientation = get_exif_orientation('static/library/' + current_channel + '/' + photo_name)
 
+                    #Note:  Display the last loaded image.  If one was not loaded before (first iteration), it'll still load and display, it just might be ugly.
                     socketio.emit('load_image_url',
                         {'data': new_url, 'current_channel': current_channel, 
                         'caption': new_caption, 'photo_orientation': photo_orientation}, 
-                        namespace='/test')  # send url of photo to client, current channel, exif info, and orientation.
+                        namespace='/test',
+                        room=room_name)  # send url of photo to client, current channel, exif info, and orientation.
 
                     print 'Cmd sent to load image:    ' + new_url + ' of channel: ' + current_channel
 
                     socketio.emit('display_image',
                         {'data': new_url, 'current_channel': current_channel, 'caption': new_caption},
-                        namespace='/test')
+                        namespace='/test',
+                        room=room_name)
 
                     print 'Cmd sent to display image: ' + new_url + ' of channel: ' + current_channel
                         
@@ -170,8 +177,17 @@ def background_thread():
 
 
 
-        time.sleep(6)  #sleep time between image transitions.  This will eventually be a parameter... probably.
-
+        #sleep time between image transitions.  This will eventually be a parameter... probably.
+        slept_count = 0 #zero out counter.
+        running_channel = current_channel # store current channel as running, current_channel may change while we are waiting to show the next image.
+        #ignore wait timer if 0 clients are connected!
+        if socketio.rooms:
+            #user can change the channel at any time, so we basically check every 500ms or so to see if it changed to give better respose on channel change.
+            while current_channel == running_channel and slept_count < (image_show_time_s * 2): 
+                time.sleep(0.5) #sleep 500ms
+                slept_count += 1 #keep track.
+        else:
+            time.sleep(0.5)    
 
 def build_exif_string(img_path):
     exif_string = ''
@@ -242,6 +258,23 @@ def client_access(client_id):
     launch_bgthread()
     return render_template('client.html',client_id=client_id)
 
+@app.route('/become_client')
+def become_client():
+    """
+    Quick link for uers to make a client without needing to know anything about the urls, etc.
+    """
+    new_room = 0  #start at 0 and add 1 to get the new room number for the client-to-be
+    if socketio.rooms:
+        for namespace, roomdict in socketio.rooms.iteritems():
+            for room_name, object in roomdict.iteritems():
+                if int(room_name) > new_room:
+                    new_room = int(room_name) + 1 # increment one above highest number found. (rooms don't have to be numbers, but I recommend it.
+    else:
+        #no rooms to look through, default to 1.
+        new_room = 1
+    print "Become Client: Giving new client-to-be room url: /client/" + str(new_room)
+    return redirect('client/' + str(new_room))   
+    
 
 #@app.route('/client_new')
 #def client_new():
